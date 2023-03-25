@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet 
+metadata: 
+  name: redis-stedi-david
+spec:
+  selector: 
+    matchLabels:
+      app: redis-stedi-david # must match spec.template.metadata.labels
+  serviceName: redis-stedi-david
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: redis-stedi-david
+    spec: 
+      containers:
+      - name: redis-stedi-david
+        image: redis:7.0.5-alpine
+        imagePullPolicy: Always
+        args: ["--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes", "--save", "900", "1", "--save", "30", "2"]
+        ports:
+          - containerPort: 6379
+            name: redis
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets-david
+              key: REDIS_PASSWORD
+        volumeMounts:
+          - name: redis-david-volume
+            mountPath: /data
+  volumeClaimTemplates: 
+  - metadata:
+      name: redis-david-volume
+    spec: 
+      accessModes:
+        - ReadWriteOnce
+      resources: 
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: redis-stedi-david
+spec: 
+  ports:
+    - port: 6379
+      name: redis
+  clusterIP: None
+  selector: 
+    app: redis-stedi-david

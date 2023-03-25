@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stedi-davidolsen-dev
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: stedi-davidolsen-dev
+  template:
+    metadata:
+      labels:
+        app: stedi-davidolsen-dev
+    spec:
+      containers:
+        - name: stedi-davidolsen-dev
+          image: gcr.io/thespiders/david-stedi-api
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets-david
+                  key: REDIS_PASSWORD
+            - name: REDIS_HOST
+              value: "redis-stedi-prod"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_DB
+              value: "0"
+            - name: KAFKA_BROKER
+              value: "localhost:9092"
+          ports: 
+            - containerPort: 443
+          resources:
+            limits:
+              cpu: ".5"
+              memory: "500Mi"
+            requests:
+              cpu: ".25"
+              memory: "250Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4567
+            initialDelaySeconds: 10
+            periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stedi-david-nodeport
+spec:
+  selector:
+    app: stedi-david-dev
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 4567
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: stedi-david-certificate
+spec:
+  domains:
+    - davidolsen.cit262.com
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stedi-david-ingress
+  annotations: 
+    kubernetes.ioingress.global-static-ip-name: stedi-david-public
+    networking.gke.io/managed-certificates: stedi-david-certificate
+spec:
+  rules:
+  - http: 
+      paths: 
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stedi-david-nodeport
+            port: 
+              number: 80
