@@ -51,7 +51,7 @@ metadata:
   name: stedi-david-nodeport
 spec:
   selector:
-    app: stedi-david-dev
+    app: stedi-davidolsen-dev
   type: NodePort
   ports:
     - port: 80
@@ -70,7 +70,7 @@ kind: Ingress
 metadata:
   name: stedi-david-ingress
   annotations: 
-    kubernetes.ioingress.global-static-ip-name: stedi-david-public
+    kubernetes.io/ingress.global-static-ip-name: stedi-david-public
     networking.gke.io/managed-certificates: stedi-david-certificate
 spec:
   rules:
