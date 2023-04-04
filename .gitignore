@@ -10,3 +10,4 @@ dump.rdb
 bin
 
 node_modules
+azure-pipelines-publisher-oneline.json
